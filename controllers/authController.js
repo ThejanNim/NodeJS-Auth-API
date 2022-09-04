@@ -2,7 +2,6 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
-const crypto = require('crypto');
 const { createJWT } = require("../utils/auth");
 
 exports.signup = async (req, res) => {
@@ -89,7 +88,8 @@ exports.signin = async (req, res) => {
             return res.status(400).json({ error: "Password is incorrect" });
         }
 
-        const access_token = createJWT(user.id, user.email, 604800);
+        const access_token = createJWT(user.email, user.id, 604800);
+        
         /*
         jwt.verify(access_token, process.env.TOKEN_SECRET, (err, decoded) => {
             if (err) {
@@ -99,11 +99,12 @@ exports.signin = async (req, res) => {
                 return res.status(200).json({
                     success: true,
                     token: access_token,
-                    message: user
+                    message: user.id
                 });
             }
         });
         */
+        
         return res.status(200).json({
             success: true,
             token: access_token,
@@ -118,4 +119,33 @@ exports.signin = async (req, res) => {
             error: 'Your request could not be processed. Please try again.'
         });
     }
+}
+
+exports.updatePassword = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        const password = user.password;
+        
+        const isPasswordMatched = await bcrypt.compare(req.body.currentPassword, password);
+
+        if (!isPasswordMatched) {
+            return res.status(400).json({error: "Current Password is Invalid"})
+        }
+
+        user.password = req.body.newPassword;
+
+        bcrypt.hash(user.password, 10, function (err, hash) {
+            user.password = hash;
+            user.save().then(response => {
+                res.status(200).json({
+                    success: true,
+                    result: response,
+                    message: "Your Password is changed"
+                })
+            })
+        })
+
+    } catch (error) {
+        return res.status(400).json({error: "Failed"});
+    }   
 }
