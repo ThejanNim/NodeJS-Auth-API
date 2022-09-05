@@ -5,6 +5,7 @@ Authentication and Authorization API using Node js, MongoDB, JWT, Bcrypt, Valida
 
 - features:
   - User Login and Register
+  - User can update password
   - Use to middleware verify jwt Token
   - Mongoose schemas to model the application data
   
